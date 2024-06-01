@@ -1,90 +1,66 @@
 const express = require('express');
 const axios = require('axios');
-const path = require('path');
+const _ = require('lodash');
 
 const app = express();
-const PORT = process.env.PORT || 9876;
-const WINDOW_SIZE = 10;
-let numbers = [];
-let windowPrevState = [];
-let windowCurrState = [];
+const port = 9876;
 
-const fetchNumbers = async (type) => {
-    let url;
-    switch (type) {
-        case 'p':
-            url = 'http://20.244.56.144/numbers/primes';
-            break;
-        case 'f':
-            url = 'http://20.244.56.144/numbers/fibo';
-            break;
-        case 'e':
-            url = 'http://20.244.56.144/numbers/even';
-            break;
-        case 'r':
-            url = 'http://20.244.56.144/numbers/rand';
-            break;
-        default:
-            url = '';
-            break;
-    }
-    try {
-        const response = await axios.get(url);
-        const responseData = response.data.numbers;
-        console.log(`Received data for type '${type}':`, responseData);
-        if (!Array.isArray(responseData)) {
-            console.error(`Response data for type '${type}' is not an array:`, responseData);
-            return [];
-        }
-        return responseData;
-    } catch (error) {
-        console.error(`Error fetching data for type '${type}':`, error);
-      
-        return [];
-    }
-};
-const calculateAverage = () => {
-    if (numbers.length === 0) {
-        return 0;
-    }
-    const sum = numbers.reduce((acc, curr) => acc + curr, 0);
-    return sum / numbers.length;
+const windowSize = 10;
+const window = [];
+
+const thirdPartyAPIs = {
+  p: 'http://20.244.56.144/test/primes',
+  f: 'http://20.244.56.144/test/fibo',
+  e: 'http://20.244.56.144/test/even',
+  r: 'http://20.244.56.144/test/rand',
 };
 
-const updateNumbers = (newNumber) => {
-    if (numbers.length >= WINDOW_SIZE) {
-        windowPrevState = numbers.slice(0, WINDOW_SIZE);
-        numbers.shift();
-    }
-    numbers.push(newNumber);
-    windowCurrState = numbers.slice(-WINDOW_SIZE);
-};
-
-app.use(express.static(path.join(__dirname, 'client', 'build')));
+const bearerToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNzE3MjIyODczLCJpYXQiOjE3MTcyMjI1NzMsImlzcyI6IkFmZm9yZG1lZCIsImp0aSI6ImFkMGE4NjgzLWU1YWEtNGFmZC1iODJjLTVjYTg1ODJiMzEzYSIsInN1YiI6Inlhc2guMjEyNWNzZTExMjJAa2lldC5lZHUifSwiY29tcGFueU5hbWUiOiJBZmZvcmRNZWQiLCJjbGllbnRJRCI6ImFkMGE4NjgzLWU1YWEtNGFmZC1iODJjLTVjYTg1ODJiMzEzYSIsImNsaWVudFNlY3JldCI6ImhlbGVacVRZQ1JoTkpKcU4iLCJvd25lck5hbWUiOiJZYXNoIENoYXdsYSIsIm93bmVyRW1haWwiOiJ5YXNoLjIxMjVjc2UxMTIyQGtpZXQuZWR1Iiwicm9sbE5vIjoiMjEwMDI5MDEwMDE5NCJ9._lKJzwJgrI5ItgdW4UgPRUzXSfubaJudx_cowwVNRmM";
 
 app.get('/numbers/:numberid', async (req, res) => {
-    const { numberid } = req.params;
-    if (!['p', 'f', 'e', 'r'].includes(numberid)) {
-        return res.status(400).json({ error: 'Invalid numberid' });
+  const numberID = req.params.numberid;
+  const apiUrl = thirdPartyAPIs[numberID];
+
+  if (!apiUrl) {
+    return res.status(400).send({ error: 'Invalid number ID' });
+  }
+
+  const prevWindowState = [...window];
+
+  try {
+    const config = {};
+    if (numberID === 'p') {
+      config.headers = { Authorization: Bearer ${bearerToken} };
+    }
+    
+    const response = await axios.get(apiUrl, { ...config, timeout: 500 });
+    const numbers = response.data.numbers;
+
+    // Ensure uniqueness and manage window size
+    const uniqueNumbers = _.uniq([...window, ...numbers]);
+    while (uniqueNumbers.length > windowSize) {
+      uniqueNumbers.shift();
     }
 
-    const newNumbers = await fetchNumbers(numberid);
-    newNumbers.forEach((num) => updateNumbers(num));
+    window.length = 0; // Clear the window array
+    window.push(...uniqueNumbers); // Add unique numbers back to window
 
-    const avg = calculateAverage();
-    const response = {
-        windowPrevState,
-        windowCurrState,
-        numbers,
-        avg,
+    const avg = _.mean(window);
+
+    const responsePayload = {
+      windowPrevState: prevWindowState,
+      windowCurrState: window,
+      numbers,
+      avg: parseFloat(avg.toFixed(2)),
     };
-    res.json(response);
+
+    res.json(responsePayload);
+  } catch (error) {
+    console.error('Error fetching data:', error.message);
+    res.status(500).send({ error: 'Error fetching data from third-party API' });
+  }
 });
 
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
-});
-
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(Average Calculator microservice running on port ${port});
 });
