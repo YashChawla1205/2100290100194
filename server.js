@@ -43,3 +43,48 @@ const fetchNumbers = async (type) => {
         return [];
     }
 };
+const calculateAverage = () => {
+    if (numbers.length === 0) {
+        return 0;
+    }
+    const sum = numbers.reduce((acc, curr) => acc + curr, 0);
+    return sum / numbers.length;
+};
+
+const updateNumbers = (newNumber) => {
+    if (numbers.length >= WINDOW_SIZE) {
+        windowPrevState = numbers.slice(0, WINDOW_SIZE);
+        numbers.shift();
+    }
+    numbers.push(newNumber);
+    windowCurrState = numbers.slice(-WINDOW_SIZE);
+};
+
+app.use(express.static(path.join(__dirname, 'client', 'build')));
+
+app.get('/numbers/:numberid', async (req, res) => {
+    const { numberid } = req.params;
+    if (!['p', 'f', 'e', 'r'].includes(numberid)) {
+        return res.status(400).json({ error: 'Invalid numberid' });
+    }
+
+    const newNumbers = await fetchNumbers(numberid);
+    newNumbers.forEach((num) => updateNumbers(num));
+
+    const avg = calculateAverage();
+    const response = {
+        windowPrevState,
+        windowCurrState,
+        numbers,
+        avg,
+    };
+    res.json(response);
+});
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
