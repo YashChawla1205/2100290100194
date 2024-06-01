@@ -15,7 +15,7 @@ const thirdPartyAPIs = {
   r: 'http://20.244.56.144/test/rand',
 };
 
-const bearerToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNzE3MjIyODczLCJpYXQiOjE3MTcyMjI1NzMsImlzcyI6IkFmZm9yZG1lZCIsImp0aSI6ImFkMGE4NjgzLWU1YWEtNGFmZC1iODJjLTVjYTg1ODJiMzEzYSIsInN1YiI6Inlhc2guMjEyNWNzZTExMjJAa2lldC5lZHUifSwiY29tcGFueU5hbWUiOiJBZmZvcmRNZWQiLCJjbGllbnRJRCI6ImFkMGE4NjgzLWU1YWEtNGFmZC1iODJjLTVjYTg1ODJiMzEzYSIsImNsaWVudFNlY3JldCI6ImhlbGVacVRZQ1JoTkpKcU4iLCJvd25lck5hbWUiOiJZYXNoIENoYXdsYSIsIm93bmVyRW1haWwiOiJ5YXNoLjIxMjVjc2UxMTIyQGtpZXQuZWR1Iiwicm9sbE5vIjoiMjEwMDI5MDEwMDE5NCJ9._lKJzwJgrI5ItgdW4UgPRUzXSfubaJudx_cowwVNRmM";
+const bearerToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNzE3MjIzMTk0LCJpYXQiOjE3MTcyMjI4OTQsImlzcyI6IkFmZm9yZG1lZCIsImp0aSI6ImFkMGE4NjgzLWU1YWEtNGFmZC1iODJjLTVjYTg1ODJiMzEzYSIsInN1YiI6Inlhc2guMjEyNWNzZTExMjJAa2lldC5lZHUifSwiY29tcGFueU5hbWUiOiJBZmZvcmRNZWQiLCJjbGllbnRJRCI6ImFkMGE4NjgzLWU1YWEtNGFmZC1iODJjLTVjYTg1ODJiMzEzYSIsImNsaWVudFNlY3JldCI6ImhlbGVacVRZQ1JoTkpKcU4iLCJvd25lck5hbWUiOiJZYXNoIENoYXdsYSIsIm93bmVyRW1haWwiOiJ5YXNoLjIxMjVjc2UxMTIyQGtpZXQuZWR1Iiwicm9sbE5vIjoiMjEwMDI5MDEwMDE5NCJ9.Iur_GtPgc9kIckq1fRWlx5lYemApGwuhaT5a6wfxI5c";
 
 app.get('/numbers/:numberid', async (req, res) => {
   const numberID = req.params.numberid;
@@ -30,7 +30,7 @@ app.get('/numbers/:numberid', async (req, res) => {
   try {
     const config = {};
     if (numberID === 'p') {
-      config.headers = { Authorization: Bearer ${bearerToken} };
+      config.headers = { Authorization: `Bearer ${bearerToken}` };
     }
     
     const response = await axios.get(apiUrl, { ...config, timeout: 500 });
@@ -62,5 +62,5 @@ app.get('/numbers/:numberid', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(Average Calculator microservice running on port ${port});
+  console.log(`Average Calculator microservice running on port ${port}`);
 });
